@@ -17,6 +17,11 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
+find_package(Qt5 COMPONENTS Core Network REQUIRED)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
 add_executable(rbq_ros_interface 
   main.cpp
     headers/rbq_api.h
@@ -24,9 +29,19 @@ add_executable(rbq_ros_interface
     headers/Subscriber.h
   )
 
-target_include_directories(rbq_ros_interface PUBLIC  ${EIGEN3_INCLUDE_DIR})
+target_include_directories(
+  rbq_ros_interface 
+    PUBLIC  
+      ${EIGEN3_INCLUDE_DIR}
+      ${QT_INCLUDES} 
+  )
 
-ament_target_dependencies(rbq_ros_interface rclcpp std_msgs sensor_msgs  ${EIGEN3_LIBRARIES})
+ament_target_dependencies(
+  rbq_ros_interface 
+    rclcpp std_msgs sensor_msgs  
+    ${EIGEN3_LIBRARIES}
+    Qt5::Core Qt5::Network
+  )
 
 install(TARGETS
   rbq_ros_interface
