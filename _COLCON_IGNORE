@@ -1,0 +1,2 @@
+if COLCON_IGNORE then this directory is ignored by 'colcon build' command
+	
