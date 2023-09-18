@@ -21,6 +21,7 @@ find_package(Qt5 COMPONENTS Core Network REQUIRED)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_executable(rbq_ros_interface 
   main.cpp
@@ -29,11 +30,13 @@ add_executable(rbq_ros_interface
     headers/Subscriber.h
     
     headers/TcpClient.h sources/TcpClient.cpp
+    Communication/UDP.h Communication/Log.h 
   )
 
 target_include_directories(
   rbq_ros_interface 
-    PUBLIC  
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/Communication/
       ${EIGEN3_INCLUDE_DIR}
       ${QT_INCLUDES} 
   )
