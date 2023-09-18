@@ -17,18 +17,22 @@
 #include "headers/Subscriber.h"
 #include "headers/TcpClient.h"
 
+#include <QCoreApplication>
+
 void spin(const rclcpp::Node::SharedPtr &_node) {
   rclcpp::spin(_node);
 }
 
-void qAppThread(const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative) {
-  int argc = 0; char* argv = 0;
-  QCoreApplication qApp(argc, argv);
-  qApp.setApplicationName("RBQ-client");
-  TcpClient* client = new TcpClient(robotStateNative);
-  client->setHost("192.168.0.10"); client->setPort(8000);
-  client->run();
-  qApp.exec();
+void qAppThread(const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative, int argc, char * argv[]) {
+    QCoreApplication a(argc, argv);
+    a.setApplicationName("RBQ-client");
+
+    TcpClient* client = new TcpClient(&a, robotStateNative);
+    // client->setHost("192.168.0.10"); client->setPort(8000);
+    client->setHost("192.168.10.13"); client->setPort(8000);
+    client->start();
+    
+    a.exec();
 }
 
 int main(int argc, char * argv[])
@@ -43,7 +47,7 @@ int main(int argc, char * argv[])
   rclcpp::Node::SharedPtr subscriber = std::make_shared<Subscriber>();
   std::thread thread_subscriber(spin, subscriber);
 
-  std::thread thread_qApp(qAppThread, robotStateNative);
+  std::thread thread_qApp(qAppThread, robotStateNative, argc, argv);
 
   while(rclcpp::ok()) {
     rclcpp::sleep_for(1000ms);

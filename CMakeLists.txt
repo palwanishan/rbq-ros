@@ -27,6 +27,8 @@ add_executable(rbq_ros_interface
     headers/rbq_api.h
     headers/Publisher.h
     headers/Subscriber.h
+    
+    headers/TcpClient.h sources/TcpClient.cpp
   )
 
 target_include_directories(
@@ -40,7 +42,11 @@ ament_target_dependencies(
   rbq_ros_interface 
     rclcpp std_msgs sensor_msgs  
     ${EIGEN3_LIBRARIES}
-    Qt5::Core Qt5::Network
+  )
+
+target_link_libraries(rbq_ros_interface
+  Qt5::Core
+  Qt5::Network
   )
 
 install(TARGETS

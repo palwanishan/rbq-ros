@@ -9,6 +9,29 @@
 #define MAX_LEG      4
 #define MAX_COMMAND_DATA        40
 
+typedef union _STAT_WORD_
+{
+    struct{
+        unsigned    CON_START:1;
+        unsigned    READY_POS:1;
+        unsigned    GROUND_POS:1;
+        unsigned    FORCE_CON:1;
+        unsigned    EXT_JOY:1;
+        unsigned    IS_STANDING:1;
+        unsigned    b:1;
+        unsigned    c:1;
+    }stat;
+    unsigned char B;
+}STAT_WORD;
+
+typedef struct _STEP_DATA_
+{
+    Eigen::Vector3f Fpos_ori0[4], Fpos_ori1[4], Fpos_ori2[4];
+    Eigen::Vector3f Fpos0[4], Fpos1[4], Fpos2[4];
+    Eigen::Vector3f ZMP_ref[10];
+    Eigen::Vector3f ZMP_cur, COM_ref;
+}STEP_DATA;
+
 typedef union{
     struct{
         unsigned    FET:1;	 	// FET ON   //
@@ -91,12 +114,23 @@ typedef struct _JOY_INFO_ {
     bool status;
 } JOY_INFO;
 
+typedef struct _DISPLAY_INFO_ {
+    unsigned char data1;
+    unsigned char data2;
+} DISPLAY_INFO;
+
+typedef struct _BATTERY_INFO_ {
+    float voltage;
+    float percent_level;
+} BATTERY_INFO;
+
 typedef struct _SENSOR_INFO_ {
     MOTOR_INFO motor[MAX_MC];
     IMU_INFO imu;
     JOY_INFO joy;
+    BATTERY_INFO battery;
+    DISPLAY_INFO display;
 } SENSOR_INFO;
-
 
 //---------------------Communication Struct---------------------
 
@@ -118,5 +152,8 @@ typedef struct _ROBOT_STATE_DATA_ {
     SENSOR_INFO  Sensor;
     MOTOR_INFO   motor_ref[MAX_MC];
     float        custom_variable[20];
+    STAT_WORD    StatusWord;
+    STEP_DATA    StepData;
 } ROBOT_STATE_DATA, *pROBOT_STATE_DATA;
+
 

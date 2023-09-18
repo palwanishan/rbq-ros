@@ -70,11 +70,11 @@ private:
     imu_msg.linear_acceleration.y = robotStateNative->Sensor.imu.acc.y();
     imu_msg.linear_acceleration.z = robotStateNative->Sensor.imu.acc.z();
 
-    RCLCPP_INFO(this->get_logger(), 
-        "Publishing rbq/imu -> \n\t ori.x: '%f' \n\t ori.y: '%f', \n\t ori.z: '%f'", 
-        imu_msg.orientation.x,
-        imu_msg.orientation.y,
-        imu_msg.orientation.z);
+    // RCLCPP_INFO(this->get_logger(), 
+    //     "Publishing rbq/imu -> \n\t ori.x: '%f' \n\t ori.y: '%f', \n\t ori.z: '%f'", 
+    //     imu_msg.orientation.x,
+    //     imu_msg.orientation.y,
+    //     imu_msg.orientation.z);
     m_publisher_imu->publish(imu_msg);
   }
 

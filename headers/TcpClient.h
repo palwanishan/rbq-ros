@@ -16,7 +16,7 @@ class TcpClient : public QObject
     Q_OBJECT
 public:
     explicit TcpClient(QObject *parent = nullptr, 
-        const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative);
+        const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative = nullptr);
     ~TcpClient();
 
     const QString &host() const;

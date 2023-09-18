@@ -1,4 +1,4 @@
-#include "../headers/TcpTcpClient.h"
+#include "../headers/TcpClient.h"
 
 TcpClient::TcpClient(QObject *parent,
     const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative)
@@ -63,43 +63,57 @@ void TcpClient::stateChanged(QAbstractSocket::SocketState socketState)
 
 void TcpClient::readyRead()
 {
+    // qInfo() << " -- TcpClient::readyRead() \n\t\t --> Received new packet.";
+
     buf.append(m_qTcpSocket->readAll());
 
-    while (1)
+    while(1)
     {
         bool is_header = false;
-        for (uint8_t p = 0; p < buf.size() - 1; p++)
+        for(int p = 0; p < buf.size()-1; p++)
         {
-            if (buf[p] == char(0xFF) && buf[p + 1] == char(0xFE))
+            if(buf[p] == (char)0xFF && buf[p+1] == (char)0xFE)
             {
+                // qInfo() << " -- TcpClient::readyRead() \n\t\t --> Header is found";
                 is_header = true;
                 buf.remove(0, p);
                 break;
             }
         }
 
-        const int packet_size = sizeof(ROBOT_STATE_DATA) + 4;
-        if (is_header)
+        const int packet_size = sizeof(ROBOT_STATE_DATA)+4;
+        if(is_header)
         {
-            if (buf.size() >= packet_size)
+            if(buf.size() >= packet_size)
             {
                 // check tail
-                if (buf[packet_size - 2] == char(0x00) && buf[packet_size - 1] == char(0x01))
+                if(buf[packet_size-2] == (char)0x00 && buf[packet_size-1] == (char)0x01)
                 {
+                    // qInfo() << " -- TcpClient::readyRead() \n\t\t --> Tail is found";
+
                     // delete header
                     buf.remove(0, 2);
 
-                    // pairing
+                    // parising
                     QByteArray tempBuf = buf.left(sizeof(ROBOT_STATE_DATA));
-                    buf.remove(0, sizeof(ROBOT_STATE_DATA) + 2);
+                    buf.remove(0, sizeof(ROBOT_STATE_DATA)+2);
 
-                    memcpy(m_robotStateNative.get(), tempBuf.data(), sizeof(ROBOT_STATE_DATA));
+                    if(m_robotStateNative != nullptr) {
+                        memcpy(m_robotStateNative.get(), tempBuf.data(), sizeof(ROBOT_STATE_DATA));
+                    }
+
+                    // qInfo() << "Received new ROBOT_STATE_DATA";
                 }
                 else
-                    buf.remove(0, 2); // delete header only
+                {
+                    // delete header only
+                    buf.remove(0, 2);
+                }
             }
             else
+            {
                 break;
+            }
         }
         else
         {
