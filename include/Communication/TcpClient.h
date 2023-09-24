@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
 #include <QObject>
@@ -21,8 +22,9 @@
 #include <QNetworkProxy>
 #include <QThread>
 #include <QString>
+#include <QTimer>
 
-#include "rbq_api.h"
+#include "../rbq_api.h"
 
 class TcpClient : public QObject
 {
@@ -38,12 +40,13 @@ public:
     quint16 port() const;
     void setPort(quint16 newPort);
 
-signals:
+    void sendMsg(const QByteArray &msg);
 
 public slots:
     void connectToHost(QString host, quint16 port);
     void disconnect();
     void start();
+    // void setUserCommand(const USER_COMMAND &userCommand);
 
 private slots:
     void connected();
@@ -51,12 +54,19 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
     void stateChanged(QAbstractSocket::SocketState socketState);
     void readyRead();
+    void readySend();
+    void reconnect();
 
 private:
-    QTcpSocket *m_qTcpSocket;
+    QTcpSocket *m_qTcpSocket = nullptr;
     QString m_host;
     quint16 m_port;
     QByteArray buf;
+    QVector<USER_COMMAND> userCommands;
+    QVector<QByteArray> m_msgBufferToBeSend;
+    QTimer *m_timerSend = nullptr;
+    QTimer *m_timerReconnect = nullptr;
+    bool m_isAutoReconnect = false;
 
     std::shared_ptr<ROBOT_STATE_DATA> m_robotStateNative = nullptr;
 };

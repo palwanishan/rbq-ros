@@ -1,4 +1,18 @@
-#include "../headers/TcpClient.h"
+// Copyright 2023 Rainbow Robotics Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "TcpClient.h"
 
 TcpClient::TcpClient(QObject *parent,
     const std::shared_ptr<ROBOT_STATE_DATA> &robotStateNative)
@@ -7,6 +21,12 @@ TcpClient::TcpClient(QObject *parent,
 {
     m_host = "";
     m_port = 0;
+
+    m_timerSend = new QTimer();
+    QObject::connect(m_timerSend, &QTimer::timeout, this, &TcpClient::readySend);
+
+    m_timerReconnect = new QTimer();
+    QObject::connect(m_timerReconnect, &QTimer::timeout, this, &TcpClient::reconnect);
 }
 
 TcpClient::~TcpClient()
@@ -38,16 +58,21 @@ void TcpClient::start()
     connect(m_qTcpSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &TcpClient::error);
 
     connectToHost(m_host, m_port);
+    m_isAutoReconnect = true;
 }
 
 void TcpClient::connected()
 {
-    qInfo() << "Connected!";
+    qInfo() << "TCP Connected!";
+    m_timerSend->start(100);
+    m_timerReconnect->stop();
 }
 
 void TcpClient::disconnected()
 {
-    qInfo() << "Disconnected";
+    qInfo() << "TCP Disconnected!";
+    m_timerSend->stop();
+    m_timerReconnect->start(1000);
 }
 
 void TcpClient::error(QAbstractSocket::SocketError socketError)
@@ -141,4 +166,32 @@ const QString &TcpClient::host() const
 void TcpClient::setHost(const QString &newHost)
 {
     m_host = newHost;
+}
+
+void TcpClient::sendMsg(const QByteArray &msg) 
+{
+    qDebug() << "TcpClient::sendMsg(): ";
+    if(m_qTcpSocket == nullptr) {
+        return;
+    }
+    if(m_qTcpSocket->state() == QAbstractSocket::ConnectedState) {
+        m_msgBufferToBeSend.append(msg);
+    }
+}
+
+void TcpClient::readySend() 
+{
+    if(m_msgBufferToBeSend.isEmpty()) {
+        return;
+    }
+    if(m_qTcpSocket->state() == QAbstractSocket::ConnectedState) {
+        m_qTcpSocket->write(m_msgBufferToBeSend.takeFirst());
+    }
+}
+
+void TcpClient::reconnect() 
+{
+    if(m_isAutoReconnect) {
+        connectToHost(m_host, m_port);
+    }
 }

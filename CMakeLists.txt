@@ -24,19 +24,21 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_executable(rbq_ros_interface 
-  main.cpp
-    headers/rbq_api.h
+  sources/main.cpp
     headers/Publisher.h
-    headers/Subscriber.h
-    
-    headers/TcpClient.h sources/TcpClient.cpp
-    Communication/UDP.h Communication/Log.h 
+    headers/Subscriber.h   
+        
+    include/RobotApiHandler.h include/rbq_api.h
+      include/Communication/NetworkHandler.h include/Communication/NetworkHandler.cpp
+      include/Communication/UDP.h include/Communication/Log.h 
+      include/Communication/TcpClient.h include/Communication/TcpClient.cpp
   )
 
 target_include_directories(
   rbq_ros_interface 
     PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/Communication/
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/Communication/
       ${EIGEN3_INCLUDE_DIR}
       ${QT_INCLUDES} 
   )

@@ -20,18 +20,18 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 
-#include "rbq_api.h"
+#include "RobotApiHandler.h"
 
 using namespace std::chrono_literals;
 
 class Publisher : public rclcpp::Node
 {
 public:
-  Publisher(const std::shared_ptr<ROBOT_STATE_DATA> &_robotStateNative = nullptr,
+  Publisher(const std::shared_ptr<RobotApiHandler> &robotApiHandler,
             const std::chrono::milliseconds &_m_sleepTime = 100ms)
   : Node("rbq_publisher")
   , m_sleepTime(_m_sleepTime)
-  , robotStateNative(_robotStateNative)
+  , m_robotApiHandler(robotApiHandler) 
   {
     m_publisher_imu = this->create_publisher<sensor_msgs::msg::Imu>("rbq/imu", 10);
     m_timer_imu = this->create_wall_timer(
@@ -42,14 +42,10 @@ public:
       m_sleepTime, std::bind(&Publisher::publishRobotState, this));
   }
 
-  void setRobotStateNative(const std::shared_ptr<ROBOT_STATE_DATA> &_robotStateNative) {
-    robotStateNative = _robotStateNative;
-  }
-
 private:
   void publishImu()
   {
-    if(robotStateNative == nullptr) {    RCLCPP_ERROR(this->get_logger(), 
+    if(m_robotApiHandler->robotStateNative == nullptr) {    RCLCPP_ERROR(this->get_logger(), 
         "Shared Data is set to nullptr.");
       return;
     }
@@ -57,18 +53,18 @@ private:
 
     imu_msg.header.stamp = this->get_clock()->now();
 
-    imu_msg.orientation.x = robotStateNative->Sensor.imu.quat.x(); 
-    imu_msg.orientation.y = robotStateNative->Sensor.imu.quat.y(); 
-    imu_msg.orientation.z = robotStateNative->Sensor.imu.quat.z(); 
-    imu_msg.orientation.w = robotStateNative->Sensor.imu.quat.w(); 
+    imu_msg.orientation.x = m_robotApiHandler->robotStateNative->Sensor.imu.quat.x(); 
+    imu_msg.orientation.y = m_robotApiHandler->robotStateNative->Sensor.imu.quat.y(); 
+    imu_msg.orientation.z = m_robotApiHandler->robotStateNative->Sensor.imu.quat.z(); 
+    imu_msg.orientation.w = m_robotApiHandler->robotStateNative->Sensor.imu.quat.w(); 
 
-    imu_msg.angular_velocity.x = robotStateNative->Sensor.imu.gyro.x();
-    imu_msg.angular_velocity.y = robotStateNative->Sensor.imu.gyro.y();
-    imu_msg.angular_velocity.z = robotStateNative->Sensor.imu.gyro.z();
+    imu_msg.angular_velocity.x = m_robotApiHandler->robotStateNative->Sensor.imu.gyro.x();
+    imu_msg.angular_velocity.y = m_robotApiHandler->robotStateNative->Sensor.imu.gyro.y();
+    imu_msg.angular_velocity.z = m_robotApiHandler->robotStateNative->Sensor.imu.gyro.z();
 
-    imu_msg.linear_acceleration.x = robotStateNative->Sensor.imu.acc.x();
-    imu_msg.linear_acceleration.y = robotStateNative->Sensor.imu.acc.y();
-    imu_msg.linear_acceleration.z = robotStateNative->Sensor.imu.acc.z();
+    imu_msg.linear_acceleration.x = m_robotApiHandler->robotStateNative->Sensor.imu.acc.x();
+    imu_msg.linear_acceleration.y = m_robotApiHandler->robotStateNative->Sensor.imu.acc.y();
+    imu_msg.linear_acceleration.z = m_robotApiHandler->robotStateNative->Sensor.imu.acc.z();
 
     // RCLCPP_INFO(this->get_logger(), 
     //     "Publishing rbq/imu -> \n\t ori.x: '%f' \n\t ori.y: '%f', \n\t ori.z: '%f'", 
@@ -80,7 +76,7 @@ private:
 
   void publishRobotState()
   {
-    if(robotStateNative == nullptr) {    RCLCPP_ERROR(this->get_logger(), 
+    if(m_robotApiHandler->robotStateNative == nullptr) {    RCLCPP_ERROR(this->get_logger(), 
         "Shared Data is set to nullptr.");
       return;
     }
@@ -89,9 +85,9 @@ private:
     for(int i=0; i<12; i++)
     {
       jointState_msg.name.push_back(m_jointNames.at(i));
-      jointState_msg.position.push_back(robotStateNative->State.joint[i].pos);
-      jointState_msg.velocity.push_back(robotStateNative->State.joint[i].vel);
-      jointState_msg.effort.push_back(robotStateNative->State.joint[i].torque);
+      jointState_msg.position.push_back(m_robotApiHandler->robotStateNative->State.joint[i].pos);
+      jointState_msg.velocity.push_back(m_robotApiHandler->robotStateNative->State.joint[i].vel);
+      jointState_msg.effort.push_back(m_robotApiHandler->robotStateNative->State.joint[i].torque);
     }
 
     m_publisher_robotState->publish(jointState_msg);
@@ -106,6 +102,8 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr m_publisher_robotState;
 	std::vector<std::string> m_jointNames{"HRR", "HRP", "HRK", "HLR", "HLP", "HLK", "FRR", "FRP", "FRK", "FLR", "FLP", "FLK"};
 
-  std::shared_ptr<ROBOT_STATE_DATA> robotStateNative;
+  std::shared_ptr<RobotApiHandler> m_robotApiHandler = nullptr;
+
+  
 };
 
